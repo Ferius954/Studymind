@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#7c6af7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StudyMind">
+<meta name="description" content="AI asistent pre spracovanie študijných materiálov">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<title>StudyMind</title>
+
+<style>
+:root {
+  --bg: #080810;
+  --surface: #111119;
+  --surface2: #1a1a28;
+  --surface3: #222234;
+  --border: #2c2c44;
+  --accent: #7c6af7;
+  --accent2: #e85d75;
+  --accent3: #3ecfbe;
+  --accent4: #f7a26a;
+  --text: #eaeaf5;
+  --muted: #646480;
+  --glow: rgba(124,106,247,0.12);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── APP SHELL ───────────────────────────────────── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+/* ── TOP BAR ─────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 10px;
+  background: rgba(8,8,16,0.97);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+
+.logo-wrap { display: flex; align-items: center; gap: 10px; }
+
+.logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  box-shadow: 0 4px 14px rgba(124,106,247,0.4);
+  flex-shrink: 0;
+}
+
+.logo-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 19px;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-actions { display: flex; gap: 6px; }
+
+.icon-btn {
+  width: 34px; height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn.connected { border-color: rgba(62,207,190,0.4); color: var(--accent3); }
+
+/* ── SCROLL AREA ─────────────────────────────────── */
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.scroll-area::-webkit-scrollbar { width: 0; }
+
+/* ── PAGES ───────────────────────────────────────── */
+.page { display: none; padding: 16px 16px 20px; }
+.page.active { display: block; }
+
+/* ── SECTION HEAD ────────────────────────────────── */
+.section-head {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin: 20px 0 10px;
+}
+.section-head:first-child { margin-top: 4px; }
+
+/* ── HOME PAGE ───────────────────────────────────── */
+.hero-card {
+  background: linear-gradient(135deg, rgba(124,106,247,0.12), rgba(62,207,190,0.06));
+  border: 1px solid rgba(124,106,247,0.2);
+  border-radius: 20px;
+  padding: 24px 20px;
+  margin-bottom: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-card::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 140px; height: 140px;
+  background: radial-gradient(circle, rgba(124,106,247,0.15), transparent 70%);
+  pointer-events: none;
+}
+
+.hero-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  margin-bottom: 10px;
+  opacity: 0.8;
+}
+
+.hero-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 26px;
+  line-height: 1.15;
+  margin-bottom: 10px;
+}
+
+.hero-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+/* Quick actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.quick-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.quick-card:active { transform: scale(0.96); }
+.quick-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: inherit;
+}
+.quick-card.podcast::after { background: rgba(124,106,247,0.06); }
+.quick-card.document::after { background: rgba(62,207,190,0.06); }
+.quick-card.presentation::after { background: rgba(232,93,117,0.06); }
+.quick-card.table-card::after { background: rgba(247,162,106,0.06); }
+.quick-card:active::after { opacity: 1; }
+
+.q-emoji { font-size: 24px; display: block; margin-bottom: 8px; }
+.q-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+.q-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+/* Stats */
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-align: center;
+}
+.stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; display: block; color: var(--accent); }
+.stat-label { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 3px; display: block; }
+
+/* ── GENERATE PAGE ───────────────────────────────── */
+.input-mode-toggle {
+  display: flex;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 5px;
+  margin-bottom: 14px;
+}
+
+.mode-pill {
+  flex: 1;
+  padding: 9px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mode-pill.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 3px 10px rgba(124,106,247,0.3);
+}
+
+.upload-zone {
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.upload-zone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, var(--glow), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.upload-zone:active::before, .upload-zone.has-content::before { opacity: 1; }
+.upload-zone.has-content { border-color: rgba(124,106,247,0.4); }
+
+.u-icon { font-size: 32px; display: block; margin-bottom: 10px; }
+.u-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+.u-sub { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+.file-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 12px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.fp-icon { font-size: 16px; flex-shrink: 0; }
+.fp-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.fp-rm { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 0; }
+
+.textarea-field {
+  width: 100%;
+  min-height: 160px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 16px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.textarea-field:focus { border-color: rgba(124,106,247,0.5); }
+
+/* Output chips */
+.output-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.out-chip {
+  padding: 9px 16px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.out-chip:active { transform: scale(0.94); }
+.out-chip.sel-podcast { background: rgba(124,106,247,0.15); border-color: rgba(124,106,247,0.4); color: var(--accent); }
+.out-chip.sel-document { background: rgba(62,207,190,0.12); border-color: rgba(62,207,190,0.4); color: var(--accent3); }
+.out-chip.sel-presentation { background: rgba(232,93,117,0.12); border-color: rgba(232,93,117,0.4); color: var(--accent2); }
+.out-chip.sel-table { background: rgba(247,162,106,0.12); border-color: rgba(247,162,106,0.4); color: var(--accent4); }
+
+/* Settings stack */
+.settings-stack {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-row label { font-size: 13px; color: var(--text); flex-shrink: 0; }
+
+.setting-row select, .setting-row input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 7px 10px;
+  outline: none;
+  -webkit-appearance: none;
+  max-width: 160px;
+  flex-shrink: 0;
+}
+
+/* ── PODCAST SETTINGS PANEL ──────────────────────── */
+.podcast-settings-panel {
+  display: none;
+  background: linear-gradient(135deg, rgba(124,106,247,0.08), rgba(62,207,190,0.04));
+  border: 1px solid rgba(124,106,247,0.25);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 10px 0 4px;
+  animation: slideDown 0.3s ease;
+}
+.podcast-settings-panel.visible { display: block; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ps-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin-bottom: 14px;
+  opacity: 0.8;
+}
+
+.ps-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Segment count pills */
+.seg-count-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.seg-pill {
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.seg-pill.active {
+  background: rgba(124,106,247,0.2);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.seg-pill:active { transform: scale(0.93); }
+
+/* Duration pills */
+.dur-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dur-pill {
+  padding: 7px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.dur-pill.active {
+  background: rgba(62,207,190,0.15);
+  border-color: var(--accent3);
+  color: var(--accent3);
+}
+.dur-pill:active { transform: scale(0.93); }
+
+.dur-pill .dp-time { font-weight: 500; display: block; }
+.dur-pill .dp-desc { font-size: 9px; opacity: 0.7; display: block; margin-top: 2px; }
+
+/* Generate button */
+.gen-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--accent), #6856e0);
+  border: none;
+  border-radius: 14px;
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 16px;
+  box-shadow: 0 8px 24px rgba(124,106,247,0.35);
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+.gen-btn:active { transform: scale(0.97); box-shadow: 0 4px 12px rgba(124,106,247,0.25); }
+.gen-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── RESULTS PAGE ────────────────────────────────── */
+.action-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.act-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 11px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.act-btn:active { transform: scale(0.96); }
+.act-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+.act-btn.drive { background: rgba(62,207,190,0.12); border-color: rgba(62,207,190,0.3); color: var(--accent3); }
+
+/* Result tabs */
+.result-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 14px;
+  scrollbar-width: none;
+}
+.result-tabs::-webkit-scrollbar { display: none; }
+
+.res-tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.res-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.res-panel { display: none; }
+.res-panel.active { display: block; }
+
+/* Podcast segments */
+.pod-segment {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.pod-seg-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+  flex-wrap: wrap;
+}
+
+.seg-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: rgba(124,106,247,0.12);
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.seg-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  flex: 1;
+}
+
+.seg-dur {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.pod-seg-body {
+  padding: 14px;
+  font-size: 13px;
+  line-height: 1.75;
+  color: #c8c8e0;
+}
+
+.speaker-tag {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-bottom: 4px;
+  margin-top: 10px;
+}
+.speaker-tag.host { background: rgba(124,106,247,0.15); color: var(--accent); }
+.speaker-tag.guest { background: rgba(62,207,190,0.12); color: var(--accent3); }
+
+/* TTS Player */
+.tts-player {
+  background: linear-gradient(135deg, rgba(124,106,247,0.1), rgba(62,207,190,0.05));
+  border: 1px solid rgba(124,106,247,0.2);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  display: none;
+}
+.tts-player.visible { display: block; }
+
+.tts-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.tts-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.tts-btn {
+  padding: 9px 18px;
+  border-radius: 22px;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.tts-btn.play { background: var(--accent); color: white; box-shadow: 0 4px 14px rgba(124,106,247,0.3); }
+.tts-btn.stop { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
+.tts-btn:active { transform: scale(0.94); }
+
+.tts-info {
+  flex: 1;
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+}
+
+.tts-progress {
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+  border-radius: 3px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+.tts-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent3));
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.5s;
+}
+
+/* Document */
+.doc-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 16px;
+}
+.doc-block h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 16px; }
+.doc-block h2 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; margin-top: 18px; margin-bottom: 8px; color: var(--accent); }
+.doc-block p { font-size: 13px; line-height: 1.75; color: #c8c8e0; }
+
+/* Slides */
+.slide-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.slide-n {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.slide-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(232,93,117,0.12);
+  color: var(--accent2);
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.slide-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+
+.slide-bullets { list-style: none; padding: 0; }
+.slide-bullets li {
+  font-size: 13px;
+  color: #c8c8e0;
+  line-height: 1.6;
+  padding: 4px 0 4px 16px;
+  position: relative;
+}
+.slide-bullets li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--accent2);
+  font-size: 10px;
+  top: 7px;
+}
+
+.notes-box {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 12px;
+  border-left: 3px solid var(--muted);
+}
+.notes-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+.notes-text { font-size: 12px; color: var(--muted); line-height: 1.5; font-style: italic; }
+
+/* Table */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 14px; border: 1px solid var(--border); }
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 480px; }
+.data-table th { background: var(--surface2); color: var(--accent); font-family: 'Syne', sans-serif; font-weight: 600; font-size: 11px; padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.data-table td { padding: 10px 14px; border-bottom: 1px solid rgba(44,44,68,0.5); color: #c0c0d8; line-height: 1.5; }
+.data-table tr:last-child td { border-bottom: none; }
+
+/* Empty state */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  gap: 14px;
+}
+.empty-state .es-icon { font-size: 48px; }
+.empty-state .es-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
+.empty-state .es-desc { font-size: 13px; color: var(--muted); line-height: 1.6; max-width: 260px; }
+
+.go-btn {
+  margin-top: 8px;
+  padding: 12px 28px;
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(124,106,247,0.3);
+}
+
+/* ── SETTINGS PAGE ───────────────────────────────── */
+.settings-page { padding: 0; }
+
+.pref-section { margin-bottom: 24px; }
+.pref-section-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.pref-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+.pref-row .pr-label { font-size: 14px; }
+.pref-row .pr-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.pref-row select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 6px 10px;
+  outline: none;
+  -webkit-appearance: none;
+  max-width: 130px;
+  flex-shrink: 0;
+}
+
+.drive-section {
+  background: linear-gradient(135deg, rgba(62,207,190,0.08), rgba(124,106,247,0.05));
+  border: 1px solid rgba(62,207,190,0.2);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.drive-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.drive-icon {
+  width: 36px; height: 36px;
+  background: rgba(62,207,190,0.15);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+.drive-info-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+.drive-info-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.drive-connect-btn {
+  width: 100%;
+  padding: 11px;
+  background: rgba(62,207,190,0.15);
+  border: 1px solid rgba(62,207,190,0.3);
+  border-radius: 10px;
+  color: var(--accent3);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.drive-connect-btn:active { transform: scale(0.97); }
+.drive-connect-btn.connected {
+  background: rgba(62,207,190,0.2);
+  border-color: rgba(62,207,190,0.4);
+}
+
+.drive-status-row {
+  display: none;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(62,207,190,0.06);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+}
+.drive-status-row.show { display: flex; align-items: center; gap: 8px; }
+.drive-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent3); flex-shrink: 0; }
+
+.storage-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.storage-bar-wrap {
+  background: var(--surface2);
+  border-radius: 6px;
+  height: 6px;
+  overflow: hidden;
+  margin: 12px 0 8px;
+}
+.storage-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent3));
+  border-radius: 6px;
+  width: 0%;
+  transition: width 1s;
+}
+.storage-info { display: flex; justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+
+.clear-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(232,93,117,0.1);
+  border: 1px solid rgba(232,93,117,0.25);
+  border-radius: 10px;
+  color: var(--accent2);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.clear-btn:active { transform: scale(0.97); }
+
+.about-card {
+  background: linear-gradient(135deg, rgba(124,106,247,0.1), rgba(62,207,190,0.06));
+  border: 1px solid rgba(124,106,247,0.2);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+}
+.about-card .ac-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 4px; }
+.about-card .ac-ver { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+.about-card .ac-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* ── BOTTOM NAV ──────────────────────────────────── */
+.bottom-nav {
+  display: flex;
+  background: rgba(8,8,16,0.97);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  padding-bottom: var(--safe-bottom);
+}
+
+.nav-item {
+  flex: 1;
+  padding: 10px 6px 8px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: color 0.2s;
+}
+.nav-item.active { color: var(--accent); }
+.nav-icon { font-size: 19px; line-height: 1; }
+
+/* ── LOADING OVERLAY ─────────────────────────────── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8,8,16,0.9);
+  backdrop-filter: blur(12px);
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.loading-overlay.show { display: flex; }
+
+.orb {
+  width: 70px; height: 70px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--accent), #4a3ca0);
+  box-shadow: 0 0 40px rgba(124,106,247,0.5), inset 0 0 20px rgba(255,255,255,0.1);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(124,106,247,0.5); }
+  50% { transform: scale(1.08); box-shadow: 0 0 60px rgba(124,106,247,0.7); }
+}
+
+.loading-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 17px; }
+.loading-step { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+.loading-cancel {
+  margin-top: 8px;
+  padding: 10px 24px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ── TOAST ───────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: calc(80px + var(--safe-bottom));
+  left: 50%; transform: translateX(-50%);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 13px;
+  color: var(--text);
+  z-index: 300;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+}
+.toast.show { opacity: 1; }
+
+/* ── INSTALL BANNER ──────────────────────────────── */
+.install-banner {
+  position: fixed;
+  bottom: calc(76px + var(--safe-bottom));
+  left: 12px; right: 12px;
+  background: linear-gradient(135deg, rgba(124,106,247,0.2), rgba(62,207,190,0.1));
+  border: 1px solid rgba(124,106,247,0.3);
+  border-radius: 16px;
+  padding: 14px 16px;
+  z-index: 150;
+  backdrop-filter: blur(20px);
+  display: none;
+  align-items: center;
+  gap: 12px;
+}
+.install-banner.show { display: flex; }
+.ib-text { flex: 1; font-size: 13px; line-height: 1.4; }
+.ib-text strong { display: block; font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 2px; }
+.ib-text span { color: var(--muted); font-size: 11px; }
+.ib-btn { padding: 8px 16px; background: var(--accent); border: none; border-radius: 10px; color: white; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.ib-close { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0; }
+
+/* Drive modal */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(8,8,16,0.85);
+  backdrop-filter: blur(10px);
+  z-index: 250;
+  display: none; align-items: flex-end; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+
+.modal-sheet {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px 24px 0 0;
+  padding: 24px 20px 32px;
+  width: 100%;
+  max-width: 600px;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-handle {
+  width: 36px; height: 4px;
+  background: var(--border);
+  border-radius: 4px;
+  margin: 0 auto 20px;
+}
+
+.modal-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 6px; }
+.modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+
+.modal-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  padding: 13px 16px;
+  outline: none;
+  margin-bottom: 12px;
+  -webkit-appearance: none;
+}
+.modal-input:focus { border-color: rgba(62,207,190,0.4); }
+
+.modal-actions { display: flex; gap: 8px; }
+
+.modal-btn {
+  flex: 1;
+  padding: 13px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.modal-btn.cancel { background: var(--surface2); color: var(--muted); }
+.modal-btn.confirm { background: var(--accent3); border-color: var(--accent3); color: var(--bg); }
+.modal-btn:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="logo-wrap">
+      <div class="logo-icon">✦</div>
+      <span class="logo-name">StudyMind</span>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="driveStatusBtn" onclick="showDriveModal()" title="Google Drive">💾</button>
+      <button class="icon-btn" onclick="showToast('📡 UI funguje offline · Generovanie vyžaduje internet')">📡</button>
+    </div>
+  </div>
+
+  <!-- SCROLLABLE AREA -->
+  <div class="scroll-area" id="scrollArea">
+
+    <!-- HOME PAGE -->
+    <div class="page active" id="page-home">
+      <div class="hero-card">
+        <div class="hero-tag">AI Študijný Asistent · v2.0</div>
+        <div class="hero-title">Zmeň materiály<br>na vedomosti</div>
+        <div class="hero-desc">Nahraj script, knihu alebo poznámky – StudyMind vytvorí podcast s nastaviteľnou dĺžkou, dokument, prezentáciu alebo tabuľku.</div>
+      </div>
+
+      <div class="section-head">Rýchle akcie</div>
+      <div class="quick-actions">
+        <div class="quick-card podcast" onclick="goGenerate('podcast')">
+          <span class="q-emoji">🎙️</span>
+          <div class="q-title">Podcast</div>
+          <div class="q-desc">Dialóg + nastaviteľná dĺžka</div>
+        </div>
+        <div class="quick-card document" onclick="goGenerate('document')">
+          <span class="q-emoji">📄</span>
+          <div class="q-title">Dokument</div>
+          <div class="q-desc">Podrobné zhrnutie</div>
+        </div>
+        <div class="quick-card presentation" onclick="goGenerate('presentation')">
+          <span class="q-emoji">🖼️</span>
+          <div class="q-title">Prezentácia</div>
+          <div class="q-desc">Snímky s poznámkami</div>
+        </div>
+        <div class="quick-card table-card" onclick="goGenerate('table')">
+          <span class="q-emoji">📊</span>
+          <div class="q-title">Tabuľka</div>
+          <div class="q-desc">Pojmy a definície</div>
+        </div>
+      </div>
+
+      <div class="section-head">Štatistiky relácie</div>
+      <div class="stat-row">
+        <div class="stat-chip">
+          <span class="stat-num" id="stat-gen">0</span>
+          <span class="stat-label">Generovaní</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-num" id="stat-words">0</span>
+          <span class="stat-label">Slov</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-num" id="stat-formats">0</span>
+          <span class="stat-label">Formátov</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GENERATE PAGE -->
+    <div class="page" id="page-generate">
+      <div class="section-head">Vstup</div>
+
+      <div class="input-mode-toggle">
+        <button class="mode-pill active" id="pill-upload" onclick="setInputMode('upload')">📁 Súbor</button>
+        <button class="mode-pill" id="pill-text" onclick="setInputMode('text')">✏️ Text</button>
+      </div>
+
+      <!-- FILE MODE -->
+      <div id="file-mode">
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileIn').click()">
+          <span class="u-icon">📂</span>
+          <div class="u-title">Nahraj materiál</div>
+          <div class="u-sub">PDF · TXT · DOCX · MD<br>Klikni alebo pretiahni súbor</div>
+        </div>
+        <input type="file" id="fileIn" multiple accept=".pdf,.txt,.docx,.md" style="display:none" onchange="handleFiles(event)">
+        <div id="filePills"></div>
+      </div>
+
+      <!-- TEXT MODE -->
+      <div id="text-mode" style="display:none">
+        <textarea class="textarea-field" id="textIn" placeholder="Vlož obsah scriptu, poznámok alebo kapitoly z knihy...&#10;&#10;StudyMind ho analyzuje a vytvorí požadované výstupy."></textarea>
+      </div>
+
+      <div class="section-head" style="margin-top:4px">Čo vygenerovať?</div>
+      <div class="output-chips">
+        <div class="out-chip sel-podcast" data-type="podcast" onclick="toggleChip(this)">🎙️ Podcast</div>
+        <div class="out-chip sel-document" data-type="document" onclick="toggleChip(this)">📄 Dokument</div>
+        <div class="out-chip" data-type="presentation" onclick="toggleChip(this)">🖼️ Prezentácia</div>
+        <div class="out-chip" data-type="table" onclick="toggleChip(this)">📊 Tabuľka</div>
+      </div>
+
+      <!-- PODCAST SETTINGS PANEL -->
+      <div class="podcast-settings-panel visible" id="podcastSettingsPanel">
+        <div class="ps-title">🎙 Nastavenia podcastu</div>
+
+        <span class="ps-label">Počet segmentov (kapitol)</span>
+        <div class="seg-count-row" id="segCountRow">
+          <div class="seg-pill" data-count="2" onclick="setSegCount(this)">2</div>
+          <div class="seg-pill" data-count="3" onclick="setSegCount(this)">3</div>
+          <div class="seg-pill active" data-count="5" onclick="setSegCount(this)">5</div>
+          <div class="seg-pill" data-count="7" onclick="setSegCount(this)">7</div>
+          <div class="seg-pill" data-count="10" onclick="setSegCount(this)">10</div>
+        </div>
+
+        <span class="ps-label">Dĺžka podcastu</span>
+        <div class="dur-row" id="durRow">
+          <div class="dur-pill" data-dur="2" data-label="Rýchly" onclick="setDuration(this)">
+            <span class="dp-time">2 min</span>
+            <span class="dp-desc">Rýchly prehľad</span>
+          </div>
+          <div class="dur-pill" data-dur="5" data-label="Krátky" onclick="setDuration(this)">
+            <span class="dp-time">5 min</span>
+            <span class="dp-desc">Krátky</span>
+          </div>
+          <div class="dur-pill active" data-dur="10" data-label="Štandardný" onclick="setDuration(this)">
+            <span class="dp-time">10 min</span>
+            <span class="dp-desc">Štandardný</span>
+          </div>
+          <div class="dur-pill" data-dur="15" data-label="Dlhý" onclick="setDuration(this)">
+            <span class="dp-time">15 min</span>
+            <span class="dp-desc">Hlboký</span>
+          </div>
+          <div class="dur-pill" data-dur="20" data-label="Rozsiahly" onclick="setDuration(this)">
+            <span class="dp-time">20 min</span>
+            <span class="dp-desc">Rozsiahly</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head">Nastavenia</div>
+      <div class="settings-stack">
+        <div class="setting-row">
+          <label>Jazyk</label>
+          <select id="s-lang">
+            <option value="sk">🇸🇰 Slovenčina</option>
+            <option value="cs">🇨🇿 Čeština</option>
+            <option value="en">🇬🇧 English</option>
+            <option value="de">🇩🇪 Deutsch</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>Podrobnosť</label>
+          <select id="s-detail">
+            <option value="standard">Štandardná</option>
+            <option value="detailed" selected>Podrobná</option>
+            <option value="expert">Expertná</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>Oblasť</label>
+          <input id="s-field" type="text" placeholder="Medicína, IT...">
+        </div>
+      </div>
+
+      <button class="gen-btn" id="genBtn" onclick="generate()">
+        ✦ Generovať
+      </button>
+    </div>
+
+    <!-- RESULTS PAGE -->
+    <div class="page" id="page-results">
+      <div id="results-empty" class="empty-state">
+        <div class="es-icon">✦</div>
+        <div class="es-title">Zatiaľ žiadne výsledky</div>
+        <div class="es-desc">Prejdi na Generovať, nahraj materiál a vytvor prvý výstup.</div>
+        <button class="go-btn" onclick="navTo('generate')">Generovať →</button>
+      </div>
+
+      <div id="results-content" style="display:none">
+        <div class="action-row">
+          <button class="act-btn" onclick="copyResults()">📋 Kopírovať</button>
+          <button class="act-btn" onclick="downloadResults()">⬇ Stiahnuť</button>
+          <button class="act-btn drive" id="saveDriveBtn" onclick="saveToDrive()">☁ Drive</button>
+        </div>
+
+        <!-- TTS Player (podcast audio) -->
+        <div class="tts-player" id="ttsPlayer">
+          <div class="tts-title">🔊 Prehrať podcast (TTS)</div>
+          <div class="tts-controls">
+            <button class="tts-btn play" id="ttsPlayBtn" onclick="toggleTTS()">▶ Prehrať</button>
+            <button class="tts-btn stop" onclick="stopTTS()">■ Stop</button>
+            <span class="tts-info" id="ttsInfo">Klikni pre prehranie</span>
+          </div>
+          <div class="tts-progress">
+            <div class="tts-progress-bar" id="ttsBar"></div>
+          </div>
+        </div>
+
+        <div class="result-tabs" id="resultTabs"></div>
+        <div id="resultPanels"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <div class="section-head">Google Drive</div>
+
+      <div class="drive-section">
+        <div class="drive-head">
+          <div class="drive-icon">📂</div>
+          <div>
+            <div class="drive-info-title">Google Drive</div>
+            <div class="drive-info-sub">Ukladá podcast výstupy do priečinka StudyMind</div>
+          </div>
+        </div>
+        <button class="drive-connect-btn" id="driveConnectBtn" onclick="showDriveModal()">
+          <span>🔗</span>
+          <span id="driveConnectLabel">Nastaviť Google Drive</span>
+        </button>
+        <div class="drive-status-row" id="driveStatusRow">
+          <div class="drive-dot"></div>
+          <span id="driveStatusText">Nie je pripojené</span>
+        </div>
+      </div>
+
+      <div class="section-head">Lokálne úložisko</div>
+
+      <div class="storage-section">
+        <div style="font-size:13px; margin-bottom:4px">Priečinok: <span style="font-family:'DM Mono',monospace; color:var(--accent); font-size:12px">asistent balast</span></div>
+        <div style="font-size:11px; color:var(--muted)">Všetky ostatné dáta a histórie</div>
+        <div class="storage-bar-wrap">
+          <div class="storage-bar" id="storageFill"></div>
+        </div>
+        <div class="storage-info">
+          <span id="storageUsed">0 KB</span>
+          <span>lokálne úložisko</span>
+        </div>
+        <button class="clear-btn" onclick="clearLocalData()">🗑 Vyčistiť lokálne dáta</button>
+      </div>
+
+      <div class="section-head">Predvolené nastavenia</div>
+      <div class="pref-row">
+        <div><div class="pr-label">Jazyk výstupu</div><div class="pr-sub">Predvolený jazyk</div></div>
+        <select id="pref-lang">
+          <option value="sk">Slovenčina</option>
+          <option value="cs">Čeština</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <div class="pref-row">
+        <div><div class="pr-label">Podrobnosť</div><div class="pr-sub">Úroveň hĺbky analýzy</div></div>
+        <select id="pref-detail">
+          <option value="standard">Štandardná</option>
+          <option value="detailed" selected>Podrobná</option>
+          <option value="expert">Expertná</option>
+        </select>
+      </div>
+
+      <div class="section-head" style="margin-top:20px">Informácie</div>
+      <div class="about-card">
+        <div class="ac-name">StudyMind</div>
+        <div class="ac-ver">v2.0 · PWA · Claude Sonnet · TTS offline</div>
+        <div class="ac-desc">AI asistent pre spracovanie študijných materiálov. Podcast sa ukladá do Google Drive/StudyMind, ostatné dáta do lokálneho priečinka "asistent balast".</div>
+      </div>
+
+      <div class="section-head" style="margin-top:20px">Inštalácia</div>
+      <div class="pref-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+        <div><div class="pr-label">📲 Android</div><div class="pr-sub">Chrome → Menu → Pridať na domovskú obrazovku</div></div>
+        <div><div class="pr-label">🍎 iPhone</div><div class="pr-sub">Safari → Zdieľať → Pridať na domovskú obrazovku</div></div>
+      </div>
+    </div>
+
+  </div><!-- /scroll-area -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="nav-home" onclick="navTo('home')">
+      <span class="nav-icon">⌂</span>
+      <span>Domov</span>
+    </button>
+    <button class="nav-item" id="nav-generate" onclick="navTo('generate')">
+      <span class="nav-icon">✦</span>
+      <span>Generovať</span>
+    </button>
+    <button class="nav-item" id="nav-results" onclick="navTo('results')">
+      <span class="nav-icon">📋</span>
+      <span>Výsledky</span>
+    </button>
+    <button class="nav-item" id="nav-settings" onclick="navTo('settings')">
+      <span class="nav-icon">⚙</span>
+      <span>Nastavenia</span>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="orb"></div>
+  <div class="loading-title">Analyzujem materiál...</div>
+  <div class="loading-step" id="loadStep">⬤ Čítam obsah</div>
+  <button class="loading-cancel" onclick="cancelGenerate()">Zrušiť</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- INSTALL BANNER -->
+<div class="install-banner" id="installBanner">
+  <div class="ib-text">
+    <strong>Nainštalovať StudyMind</strong>
+    <span>Pridaj na domovskú obrazovku</span>
+  </div>
+  <button class="ib-btn" id="installBtn">Inštalovať</button>
+  <button class="ib-close" onclick="document.getElementById('installBanner').classList.remove('show')">✕</button>
+</div>
+
+<!-- DRIVE MODAL -->
+<div class="modal-overlay" id="driveModal" onclick="closeDriveModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📂 Google Drive nastavenie</div>
+    <div class="modal-sub">Vlož Google API kľúč pre ukladanie do priečinka <strong>StudyMind</strong> na Google Drive. Podcast výstupy sa ukladajú automaticky po generovaní.<br><br>Ak nemáš API kľúč, použi možnosť manuálneho stiahnutia.</div>
+    <input class="modal-input" id="driveApiInput" type="password" placeholder="Google Drive API kľúč (voliteľné)">
+    <div style="font-size:11px; color:var(--muted); margin-bottom:16px; font-family:'DM Mono',monospace;">
+      Alternatíva: stiahni TXT súbor a nahraj manuálne na Drive
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeDriveModalDirect()">Zrušiť</button>
+      <button class="modal-btn confirm" onclick="connectDrive()">Uložiť nastavenie</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+let state = {
+  inputMode: 'upload',
+  fileContent: '',
+  uploadedFiles: [],
+  selectedTypes: new Set(['podcast', 'document']),
+  outputs: {},
+  stats: { gen: 0, words: 0, formats: 0 },
+  abortCtrl: null,
+  podcastSegments: 5,
+  podcastDuration: 10,
+  driveApiKey: localStorage.getItem('sm_drive_key') || '',
+  driveConnected: false
+};
+
+// TTS state
+let ttsState = {
+  utterances: [],
+  currentIdx: 0,
+  speaking: false,
+  total: 0
+};
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  loadLocalStats();
+  checkDriveConnection();
+  updateStorageInfo();
+});
+
+// ════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════
+function navTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+  document.getElementById('scrollArea').scrollTop = 0;
+}
+
+function goGenerate(preselect) {
+  state.selectedTypes.clear();
+  state.selectedTypes.add(preselect);
+  document.querySelectorAll('.out-chip').forEach(c => {
+    const t = c.dataset.type;
+    c.className = 'out-chip';
+    if (t === preselect) c.classList.add('sel-' + t);
+  });
+  updatePodcastPanel();
+  navTo('generate');
+}
+
+// ════════════════════════════════════════════════════
+// INPUT MODE
+// ════════════════════════════════════════════════════
+function setInputMode(mode) {
+  state.inputMode = mode;
+  document.getElementById('pill-upload').classList.toggle('active', mode === 'upload');
+  document.getElementById('pill-text').classList.toggle('active', mode === 'text');
+  document.getElementById('file-mode').style.display = mode === 'upload' ? 'block' : 'none';
+  document.getElementById('text-mode').style.display = mode === 'text' ? 'block' : 'none';
+}
+
+// ════════════════════════════════════════════════════
+// FILE HANDLING
+// ════════════════════════════════════════════════════
+function handleFiles(event) {
+  const files = Array.from(event.target.files);
+  state.fileContent = '';
+  files.forEach(file => {
+    state.uploadedFiles.push(file);
+    const reader = new FileReader();
+    reader.onload = e => {
+      state.fileContent += `\n\n=== ${file.name} ===\n` + e.target.result;
+    };
+    reader.readAsText(file);
+    addFilePill(file);
+  });
+  document.getElementById('uploadZone').classList.add('has-content');
+}
+
+function addFilePill(file) {
+  const icons = { pdf:'📕', txt:'📝', docx:'📘', md:'📓' };
+  const ext = file.name.split('.').pop().toLowerCase();
+  const size = file.size > 1024*1024 ? (file.size/1024/1024).toFixed(1)+'MB' : Math.round(file.size/1024)+'KB';
+  const pill = document.createElement('div');
+  pill.className = 'file-pill';
+  pill.innerHTML = `<span class="fp-icon">${icons[ext]||'📄'}</span>
+    <span class="fp-name">${file.name}</span>
+    <span style="color:var(--muted);font-size:11px;font-family:'DM Mono',monospace">${size}</span>
+    <button class="fp-rm" onclick="this.parentElement.remove()">✕</button>`;
+  document.getElementById('filePills').appendChild(pill);
+}
+
+// Drag & drop
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = 'var(--accent)'; });
+uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.style.borderColor = '';
+  handleFiles({ target: { files: e.dataTransfer.files } });
+});
+
+// ════════════════════════════════════════════════════
+// CHIP TOGGLE
+// ════════════════════════════════════════════════════
+function toggleChip(el) {
+  const t = el.dataset.type;
+  if (state.selectedTypes.has(t)) {
+    if (state.selectedTypes.size === 1) { showToast('Vyber aspoň jeden formát'); return; }
+    state.selectedTypes.delete(t);
+    el.className = 'out-chip';
+  } else {
+    state.selectedTypes.add(t);
+    el.classList.add('sel-' + t);
+  }
+  updatePodcastPanel();
+}
+
+function updatePodcastPanel() {
+  const panel = document.getElementById('podcastSettingsPanel');
+  panel.classList.toggle('visible', state.selectedTypes.has('podcast'));
+}
+
+// ════════════════════════════════════════════════════
+// PODCAST SETTINGS
+// ════════════════════════════════════════════════════
+function setSegCount(el) {
+  document.querySelectorAll('.seg-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  state.podcastSegments = parseInt(el.dataset.count);
+}
+
+function setDuration(el) {
+  document.querySelectorAll('.dur-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  state.podcastDuration = parseInt(el.dataset.dur);
+}
+
+// ════════════════════════════════════════════════════
+// GENERATE
+// ════════════════════════════════════════════════════
+const loadSteps = [
+  '⬤ Čítam obsah materiálu',
+  '⬤ Identifikujem kľúčové témy',
+  '⬤ Štruktúrujem informácie',
+  '⬤ Generujem výstup',
+  '⬤ Finalizujem formátovanie'
+];
+
+async function generate() {
+  const content = state.inputMode === 'text'
+    ? document.getElementById('textIn').value.trim()
+    : state.fileContent.trim();
+
+  if (!content) {
+    showToast(state.inputMode === 'text' ? 'Vlož text materiálu!' : 'Nahraj súbor alebo prepni na Text');
+    return;
+  }
+  if (state.selectedTypes.size === 0) { showToast('Vyber aspoň jeden typ výstupu'); return; }
+
+  const langMap = { sk:'slovenčine', cs:'češtine', en:'angličtine', de:'nemčine' };
+  const detailMap = { standard:'stručný', detailed:'podrobný', expert:'expertný/akademický' };
+  const lang = document.getElementById('s-lang').value;
+  const detail = document.getElementById('s-detail').value;
+  const field = document.getElementById('s-field').value;
+  const types = Array.from(state.selectedTypes);
+
+  const segs = state.podcastSegments;
+  const dur = state.podcastDuration;
+  const durPerSeg = Math.round(dur / segs * 10) / 10;
+
+  document.getElementById('loadingOverlay').classList.add('show');
+  document.getElementById('genBtn').disabled = true;
+
+  let stepIdx = 0;
+  const stepTimer = setInterval(() => {
+    document.getElementById('loadStep').textContent = loadSteps[stepIdx % loadSteps.length];
+    stepIdx++;
+  }, 2000);
+
+  const descMap = {
+    podcast: `PODCAST SKRIPT: Dialogový formát s moderátorom (M:) a hosťom/expertom (H:). PRESNE ${segs} segmentov, každý segment ~${durPerSeg} min, celková dĺžka ~${dur} min. Každý segment musí byť podstatne dlhší pre dosiahnutie požadovanej dĺžky.`,
+    document: 'TEXTOVÝ DOKUMENT: Podrobné zhrnutie s nadpismi, kľúčovými pojmami tučným písmom, definíciami a príkladmi.',
+    presentation: 'PREZENTÁCIA: Minimálne 8 snímok s typom (title/content/summary), nadpisom, 4-6 bullet points a poznámkami.',
+    table: 'TABUĽKA: Pojmy s stĺpcami: Pojem | Definícia | Príklad | Dôležitosť'
+  };
+
+  const prompt = `Si expertný ${field||''}pedagóg a tvorca študijného obsahu. Analyzuj materiál a vytvor výstupy v ${langMap[lang]} na ${detailMap[detail]} úrovni.
+
+${types.map(t => descMap[t]).join('\n\n')}
+
+DÔLEŽITÉ PRE PODCAST:
+- Presne ${segs} segmentov, celková dĺžka ~${dur} minút
+- Každý segment má trvanie ~${durPerSeg} min  
+- Obsah musí byť dostatočne rozsiahly pre danú dĺžku (cca ${Math.round(dur * 130)} slov celkovo)
+- Dialóg musí byť prirodzený, edukatívny a pútavý
+
+Odpovedaj IBA v JSON bez iného textu. Kľúče: ${types.join(', ')}.
+- podcast: {"segments":[{"number":1,"title":"...","duration":"${durPerSeg} min","content":"M: ...\\nH: ..."}]}
+- document: {"title":"...","sections":[{"heading":"...","content":"..."}]}
+- presentation: {"slides":[{"type":"title|content|summary","title":"...","bullets":["..."],"notes":"..."}]}
+- table: {"headers":["Pojem","Definícia","Príklad","Dôležitosť"],"rows":[["...","...","...","..."]]}
+
+MATERIÁL:
+${content.substring(0, 7000)}`;
+
+  state.abortCtrl = new AbortController();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: state.abortCtrl.signal,
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 5000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const raw = (data.content||[]).map(c=>c.text||'').join('');
+    let parsed = {};
+    try {
+      parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    } catch {
+      const m = raw.match(/\{[\s\S]*\}/);
+      if (m) try { parsed = JSON.parse(m[0]); } catch {}
+    }
+
+    state.outputs = parsed;
+
+    // Save to local storage
+    saveToLocalStorage(parsed, types, content);
+
+    // Auto-save podcast to Drive if connected
+    if (parsed.podcast && state.driveConnected) {
+      await autoSavePodcastToDrive(parsed.podcast);
+    }
+
+    // Stats
+    const wordCount = content.split(/\s+/).length;
+    state.stats.gen++;
+    state.stats.words += wordCount;
+    state.stats.formats += types.length;
+    updateStats();
+    saveLocalStats();
+
+    renderResults(parsed, types);
+    navTo('results');
+
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      showToast('Chyba pri generovaní. Skontroluj pripojenie.');
+      console.error(err);
+    }
+  } finally {
+    clearInterval(stepTimer);
+    document.getElementById('loadingOverlay').classList.remove('show');
+    document.getElementById('genBtn').disabled = false;
+    state.abortCtrl = null;
+  }
+}
+
+function cancelGenerate() {
+  if (state.abortCtrl) state.abortCtrl.abort();
+  document.getElementById('loadingOverlay').classList.remove('show');
+  document.getElementById('genBtn').disabled = false;
+}
+
+// ════════════════════════════════════════════════════
+// RESULTS RENDERING
+// ════════════════════════════════════════════════════
+const tabLabels = { podcast:'🎙 Podcast', document:'📄 Dokument', presentation:'🖼 Prezentácia', table:'📊 Tabuľka' };
+
+function renderResults(data, types) {
+  document.getElementById('results-empty').style.display = 'none';
+  document.getElementById('results-content').style.display = 'block';
+
+  const tabs = document.getElementById('resultTabs');
+  const panels = document.getElementById('resultPanels');
+  tabs.innerHTML = '';
+  panels.innerHTML = '';
+
+  // Show TTS player if podcast generated
+  const ttsPlayer = document.getElementById('ttsPlayer');
+  if (data.podcast && data.podcast.segments) {
+    ttsPlayer.classList.add('visible');
+    prepareTTS(data.podcast.segments);
+  } else {
+    ttsPlayer.classList.remove('visible');
+    stopTTS();
+  }
+
+  types.forEach((type, i) => {
+    const tab = document.createElement('button');
+    tab.className = 'res-tab' + (i===0?' active':'');
+    tab.textContent = tabLabels[type];
+    tab.onclick = () => {
+      document.querySelectorAll('.res-tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.res-panel').forEach(p=>p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('rp-'+type).classList.add('active');
+    };
+    tabs.appendChild(tab);
+
+    const panel = document.createElement('div');
+    panel.className = 'res-panel' + (i===0?' active':'');
+    panel.id = 'rp-' + type;
+    panel.innerHTML = buildPanel(type, data[type]);
+    panels.appendChild(panel);
+  });
+}
+
+function buildPanel(type, data) {
+  if (!data) return '<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-title">Dáta chýbajú</div></div>';
+
+  if (type === 'podcast') {
+    return (data.segments||[]).map(s => `
+      <div class="pod-segment">
+        <div class="pod-seg-head">
+          <span class="seg-num">SEG ${s.number||''}</span>
+          <span class="seg-title">${s.title||''}</span>
+          <span class="seg-dur">⏱ ${s.duration||''}</span>
+        </div>
+        <div class="pod-seg-body">${fmtPodcast(s.content||'')}</div>
+      </div>`).join('');
+  }
+
+  if (type === 'document') {
+    return `<div class="doc-block">
+      <h1>${data.title||'Dokument'}</h1>
+      ${(data.sections||[]).map(s=>`<h2>${s.heading||''}</h2><p>${(s.content||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</p>`).join('')}
+    </div>`;
+  }
+
+  if (type === 'presentation') {
+    return (data.slides||[]).map((s,i)=>`
+      <div class="slide-card">
+        <span class="slide-n">Snímka ${i+1}</span>
+        <span class="slide-badge">${s.type==='title'?'Titulná':s.type==='summary'?'Záver':'Obsah'}</span>
+        <div class="slide-title">${s.title||''}</div>
+        <ul class="slide-bullets">${(s.bullets||[]).map(b=>`<li>${b}</li>`).join('')}</ul>
+        ${s.notes?`<div class="notes-box"><div class="notes-label">📢 Poznámky</div><div class="notes-text">${s.notes}</div></div>`:''}
+      </div>`).join('');
+  }
+
+  if (type === 'table') {
+    return `<div class="table-wrap"><table class="data-table">
+      <thead><tr>${(data.headers||[]).map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+      <tbody>${(data.rows||[]).map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table></div>`;
+  }
+  return '';
+}
+
+function fmtPodcast(text) {
+  const lines = text.split('\n');
+  let html = '';
+  lines.forEach(line => {
+    if (line.startsWith('M:')) {
+      html += `<span class="speaker-tag host">🎙 Moderátor</span><br>${line.slice(2).trim()}<br><br>`;
+    } else if (line.startsWith('H:')) {
+      html += `<span class="speaker-tag guest">🎓 Hosť/Expert</span><br>${line.slice(2).trim()}<br><br>`;
+    } else if (line.trim()) {
+      html += line + '<br>';
+    }
+  });
+  return html;
+}
+
+// ════════════════════════════════════════════════════
+// TTS — TEXT TO SPEECH (offline, free, browser built-in)
+// ════════════════════════════════════════════════════
+function prepareTTS(segments) {
+  stopTTS();
+  ttsState.utterances = [];
+  ttsState.currentIdx = 0;
+  ttsState.speaking = false;
+
+  const fullText = segments.map(s => {
+    const cleanContent = (s.content||'')
+      .replace(/^M:\s*/gm, 'Moderátor: ')
+      .replace(/^H:\s*/gm, 'Expert: ');
+    return `Segment ${s.number}: ${s.title}.\n${cleanContent}`;
+  }).join('\n\n');
+
+  // Split into chunks for better TTS handling
+  const chunks = splitTextForTTS(fullText, 200);
+  ttsState.total = chunks.length;
+
+  chunks.forEach((chunk, i) => {
+    const utt = new SpeechSynthesisUtterance(chunk);
+    utt.lang = document.getElementById('s-lang')?.value === 'en' ? 'en-US' :
+               document.getElementById('s-lang')?.value === 'de' ? 'de-DE' :
+               document.getElementById('s-lang')?.value === 'cs' ? 'cs-CZ' : 'sk-SK';
+    utt.rate = 0.95;
+    utt.pitch = 1.0;
+    utt.volume = 1.0;
+    utt.onend = () => {
+      ttsState.currentIdx++;
+      updateTTSProgress();
+      if (ttsState.currentIdx < ttsState.total && ttsState.speaking) {
+        // Next chunk plays automatically
+      }
+    };
+    utt.onerror = () => {
+      // Ignore errors, continue
+    };
+    ttsState.utterances.push(utt);
+  });
+
+  document.getElementById('ttsInfo').textContent = `${segments.length} segmentov · ~${state.podcastDuration} min`;
+  document.getElementById('ttsBar').style.width = '0%';
+  document.getElementById('ttsPlayBtn').textContent = '▶ Prehrať';
+}
+
+function splitTextForTTS(text, maxWords) {
+  const words = text.split(/\s+/);
+  const chunks = [];
+  let current = [];
+
+  words.forEach(word => {
+    current.push(word);
+    if (current.length >= maxWords || word.endsWith('.') || word.endsWith('?') || word.endsWith('!')) {
+      if (current.length >= 30) {
+        chunks.push(current.join(' '));
+        current = [];
+      }
+    }
+  });
+  if (current.length > 0) chunks.push(current.join(' '));
+  return chunks;
+}
+
+function toggleTTS() {
+  if (ttsState.speaking) {
+    speechSynthesis.pause();
+    ttsState.speaking = false;
+    document.getElementById('ttsPlayBtn').textContent = '▶ Pokračovať';
+    document.getElementById('ttsInfo').textContent = 'Pozastavené';
+  } else {
+    if (speechSynthesis.paused) {
+      speechSynthesis.resume();
+    } else {
+      playFromChunk(ttsState.currentIdx);
+    }
+    ttsState.speaking = true;
+    document.getElementById('ttsPlayBtn').textContent = '⏸ Pauza';
+    document.getElementById('ttsInfo').textContent = 'Prehráva...';
+  }
+}
+
+function playFromChunk(startIdx) {
+  speechSynthesis.cancel();
+  ttsState.currentIdx = startIdx;
+
+  function playNext() {
+    if (ttsState.currentIdx >= ttsState.utterances.length || !ttsState.speaking) {
+      if (ttsState.currentIdx >= ttsState.utterances.length) {
+        ttsState.speaking = false;
+        ttsState.currentIdx = 0;
+        document.getElementById('ttsPlayBtn').textContent = '▶ Prehrať znova';
+        document.getElementById('ttsInfo').textContent = 'Dokončené ✓';
+        document.getElementById('ttsBar').style.width = '100%';
+      }
+      return;
+    }
+    const utt = ttsState.utterances[ttsState.currentIdx];
+    utt.onend = () => {
+      ttsState.currentIdx++;
+      updateTTSProgress();
+      playNext();
+    };
+    speechSynthesis.speak(utt);
+  }
+
+  playNext();
+}
+
+function stopTTS() {
+  speechSynthesis.cancel();
+  ttsState.speaking = false;
+  ttsState.currentIdx = 0;
+  const btn = document.getElementById('ttsPlayBtn');
+  if (btn) btn.textContent = '▶ Prehrať';
+  const info = document.getElementById('ttsInfo');
+  if (info) info.textContent = 'Klikni pre prehranie';
+  const bar = document.getElementById('ttsBar');
+  if (bar) bar.style.width = '0%';
+}
+
+function updateTTSProgress() {
+  if (ttsState.total === 0) return;
+  const pct = Math.round((ttsState.currentIdx / ttsState.total) * 100);
+  document.getElementById('ttsBar').style.width = pct + '%';
+  const segIdx = Math.floor((ttsState.currentIdx / ttsState.total) * state.podcastSegments);
+  document.getElementById('ttsInfo').textContent = `Segment ${Math.min(segIdx+1, state.podcastSegments)}/${state.podcastSegments}`;
+}
+
+// ════════════════════════════════════════════════════
+// COPY / DOWNLOAD
+// ════════════════════════════════════════════════════
+function copyResults() {
+  const text = Object.entries(state.outputs)
+    .map(([k,v]) => `=== ${k.toUpperCase()} ===\n${JSON.stringify(v,null,2)}`).join('\n\n');
+  navigator.clipboard.writeText(text).then(() => showToast('Skopírované do schránky!'));
+}
+
+function buildDownloadText() {
+  let txt = `StudyMind Export · ${new Date().toLocaleDateString('sk-SK')}\n${'='.repeat(50)}\n`;
+  Object.entries(state.outputs).forEach(([type, data]) => {
+    txt += `\n${'='.repeat(50)}\n${type.toUpperCase()}\n${'='.repeat(50)}\n\n`;
+    if (type === 'podcast') {
+      (data.segments||[]).forEach(s => { txt += `--- Segment ${s.number}: ${s.title} (${s.duration}) ---\n${s.content}\n\n`; });
+    } else if (type === 'document') {
+      txt += `# ${data.title}\n\n`;
+      (data.sections||[]).forEach(s => { txt += `## ${s.heading}\n${s.content}\n\n`; });
+    } else if (type === 'presentation') {
+      (data.slides||[]).forEach((s,i) => { txt += `[${i+1}] ${s.title}\n${(s.bullets||[]).map(b=>'• '+b).join('\n')}\n${s.notes?'Poznámky: '+s.notes:''}\n\n`; });
+    } else if (type === 'table') {
+      txt += (data.headers||[]).join(' | ')+'\n';
+      (data.rows||[]).forEach(r => { txt += r.join(' | ')+'\n'; });
+    }
+  });
+  return txt;
+}
+
+function downloadResults() {
+  const txt = buildDownloadText();
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `studymind-${Date.now()}.txt`;
+  a.click();
+  showToast('Sťahovanie spustené!');
+}
+
+// ════════════════════════════════════════════════════
+// GOOGLE DRIVE INTEGRATION
+// ════════════════════════════════════════════════════
+function showDriveModal() {
+  document.getElementById('driveModal').classList.add('show');
+  document.getElementById('driveApiInput').value = state.driveApiKey;
+}
+
+function closeDriveModal(e) {
+  if (e.target === document.getElementById('driveModal')) closeDriveModalDirect();
+}
+
+function closeDriveModalDirect() {
+  document.getElementById('driveModal').classList.remove('show');
+}
+
+function connectDrive() {
+  const key = document.getElementById('driveApiInput').value.trim();
+  state.driveApiKey = key;
+  state.driveConnected = key.length > 0;
+  localStorage.setItem('sm_drive_key', key);
+  closeDriveModalDirect();
+  checkDriveConnection();
+  showToast(state.driveConnected ? '✓ Google Drive nastavený!' : 'Nastavenie uložené (bez API kľúča)');
+}
+
+function checkDriveConnection() {
+  const key = localStorage.getItem('sm_drive_key') || '';
+  state.driveApiKey = key;
+  state.driveConnected = key.length > 0;
+
+  const btn = document.getElementById('driveStatusBtn');
+  const statusRow = document.getElementById('driveStatusRow');
+  const connectBtn = document.getElementById('driveConnectBtn');
+  const connectLabel = document.getElementById('driveConnectLabel');
+  const statusText = document.getElementById('driveStatusText');
+
+  if (state.driveConnected) {
+    btn?.classList.add('connected');
+    statusRow?.classList.add('show');
+    if (statusText) statusText.textContent = 'Pripojené · Priečinok: StudyMind';
+    if (connectLabel) connectLabel.textContent = 'Zmeniť nastavenie';
+    if (connectBtn) connectBtn.classList.add('connected');
+  } else {
+    btn?.classList.remove('connected');
+    statusRow?.classList.remove('show');
+    if (connectLabel) connectLabel.textContent = 'Nastaviť Google Drive';
+    if (connectBtn) connectBtn.classList.remove('connected');
+  }
+}
+
+async function saveToDrive() {
+  if (!state.driveConnected || !state.driveApiKey) {
+    // Fallback: download file with Drive-ready name
+    downloadForDrive();
+    return;
+  }
+  showToast('Ukladám na Google Drive...');
+  await autoSavePodcastToDrive(state.outputs.podcast);
+}
+
+async function autoSavePodcastToDrive(podcastData) {
+  if (!podcastData) return;
+
+  const fileName = `StudyMind_Podcast_${new Date().toLocaleDateString('sk-SK').replace(/\./g,'_')}.txt`;
+  let content = `StudyMind Podcast Export\n${new Date().toLocaleDateString('sk-SK')}\n${'='.repeat(40)}\n\n`;
+  (podcastData.segments||[]).forEach(s => {
+    content += `--- Segment ${s.number}: ${s.title} (${s.duration}) ---\n${s.content}\n\n`;
+  });
+
+  try {
+    // Try to find/create StudyMind folder first
+    const folderRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='StudyMind' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      { headers: { Authorization: `Bearer ${state.driveApiKey}` } }
+    );
+    const folderData = await folderRes.json();
+    let folderId = folderData.files?.[0]?.id;
+
+    if (!folderId) {
+      // Create folder
+      const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${state.driveApiKey}` },
+        body: JSON.stringify({ name: 'StudyMind', mimeType: 'application/vnd.google-apps.folder' })
+      });
+      const created = await createRes.json();
+      folderId = created.id;
+    }
+
+    // Upload file
+    const metadata = { name: fileName, parents: [folderId] };
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], {type:'application/json'}));
+    form.append('file', new Blob([content], {type:'text/plain'}));
+
+    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${state.driveApiKey}` },
+      body: form
+    });
+
+    showToast('✓ Uložené na Drive/StudyMind!');
+  } catch (err) {
+    console.warn('Drive save failed:', err);
+    showToast('Drive chyba – súbor stiahnutý lokálne');
+    downloadForDrive();
+  }
+}
+
+function downloadForDrive() {
+  // Creates a named file ready to manually upload to Drive
+  const txt = buildDownloadText();
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `StudyMind_${new Date().toLocaleDateString('sk-SK').replace(/\./g,'_')}.txt`;
+  a.click();
+  showToast('Stiahnuté – nahraj manuálne na Drive');
+}
+
+// ════════════════════════════════════════════════════
+// LOCAL STORAGE (priečinok: asistent balast)
+// ════════════════════════════════════════════════════
+const LS_PREFIX = 'asistent-balast';
+
+function saveToLocalStorage(outputs, types, originalContent) {
+  try {
+    const entry = {
+      timestamp: Date.now(),
+      date: new Date().toLocaleDateString('sk-SK'),
+      types,
+      outputs,
+      preview: originalContent.substring(0, 200)
+    };
+    const existing = JSON.parse(localStorage.getItem(LS_PREFIX + ':history') || '[]');
+    existing.unshift(entry);
+    // Keep last 20 entries
+    if (existing.length > 20) existing.splice(20);
+    localStorage.setItem(LS_PREFIX + ':history', JSON.stringify(existing));
+    updateStorageInfo();
+  } catch (e) {
+    console.warn('LocalStorage full:', e);
+  }
+}
+
+function saveLocalStats() {
+  localStorage.setItem(LS_PREFIX + ':stats', JSON.stringify(state.stats));
+}
+
+function loadLocalStats() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_PREFIX + ':stats') || '{}');
+    if (saved.gen) state.stats.gen = saved.gen;
+    if (saved.words) state.stats.words = saved.words;
+    if (saved.formats) state.stats.formats = saved.formats;
+    updateStats();
+  } catch {}
+}
+
+function updateStorageInfo() {
+  let total = 0;
+  for (let key in localStorage) {
+    if (localStorage.hasOwnProperty(key)) {
+      total += (localStorage[key].length + key.length) * 2;
+    }
+  }
+  const kb = Math.round(total / 1024);
+  const el = document.getElementById('storageUsed');
+  if (el) el.textContent = kb > 1024 ? (kb/1024).toFixed(1) + ' MB' : kb + ' KB';
+  const bar = document.getElementById('storageFill');
+  if (bar) bar.style.width = Math.min((kb / 5000) * 100, 100) + '%';
+}
+
+function clearLocalData() {
+  if (!confirm('Vymazať všetky lokálne dáta (asistent balast)?')) return;
+  const keysToDelete = [];
+  for (let key in localStorage) {
+    if (key.startsWith(LS_PREFIX)) keysToDelete.push(key);
+  }
+  keysToDelete.forEach(k => localStorage.removeItem(k));
+  state.stats = { gen: 0, words: 0, formats: 0 };
+  updateStats();
+  updateStorageInfo();
+  showToast('✓ Lokálne dáta vymazané');
+}
+
+// ════════════════════════════════════════════════════
+// STATS
+// ════════════════════════════════════════════════════
+function updateStats() {
+  document.getElementById('stat-gen').textContent = state.stats.gen;
+  document.getElementById('stat-words').textContent = state.stats.words > 999 ?
+    (state.stats.words/1000).toFixed(1)+'k' : state.stats.words;
+  document.getElementById('stat-formats').textContent = state.stats.formats;
+}
+
+// ════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════
+function showToast(msg, duration = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ════════════════════════════════════════════════════
+// PWA – Service Worker
+// ════════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  // Inline SW via blob for single-file deployment
+  const swCode = `
+const CACHE = 'studymind-v2';
+const ASSETS = ['/'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS).catch(()=>{})));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  if (e.request.url.includes('api.anthropic.com') ||
+      e.request.url.includes('fonts.googleapis.com')) return;
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => cached))
+  );
+});
+`;
+  try {
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url, { scope: '/' })
+      .then(() => console.log('[SW] Registered'))
+      .catch(() => {});
+  } catch {}
+}
+
+// ════════════════════════════════════════════════════
+// PWA – Install Prompt
+// ════════════════════════════════════════════════════
+let deferredInstall = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstall = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  const { outcome } = await deferredInstall.userChoice;
+  if (outcome === 'accepted') {
+    showToast('✓ StudyMind nainštalovaný!');
+    document.getElementById('installBanner').classList.remove('show');
+  }
+  deferredInstall = null;
+});
+
+window.addEventListener('appinstalled', () => {
+  showToast('✓ StudyMind nainštalovaný!');
+  document.getElementById('installBanner').classList.remove('show');
+});
+
+// Stop TTS when leaving results page
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!btn.id.includes('results')) stopTTS();
+  });
+});
+</script>
+</body>
+</html>
